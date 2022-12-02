@@ -5,7 +5,7 @@ ARG BASETAG=20.04
 
 ARG ARG_MERGE_STAGE_VNC_BASE=stage_vnc
 ARG ARG_MERGE_STAGE_BROWSER_BASE=merge_stage_vnc
-ARG ARG_FINAL_STAGE_BASE=merge_stage_browser
+ARG ARG_FINAL_STAGE_BASE=merge_stage_vnc
 
 
 ###############
@@ -192,19 +192,20 @@ RUN \
     &&  chmod +x -v "${NOVNC_HOME}/utils/novnc_proxy"
 
 ### add 'index.html' for choosing noVNC client
-RUN echo -e \
-"<!DOCTYPE html>\n" \
-"<html>\n" \
-"    <head>\n" \
-"        <title>noVNC</title>\n" \
-"        <meta charset=\"utf-8\"/>\n" \
-"    </head>\n" \
-"    <body>\n" \
-"        <p><a href=\"vnc_lite.html\">noVNC Lite Client</a></p>\n" \
-"        <p><a href=\"vnc.html\">noVNC Full Client</a></p>\n" \
-"    </body>\n" \
-"</html>" \
-> "${NOVNC_HOME}"/index.html
+# RUN echo -e \
+# "<!DOCTYPE html>\n" \
+# "<html>\n" \
+# "    <head>\n" \
+# "        <title>noVNC</title>\n" \
+# "        <meta charset=\"utf-8\"/>\n" \
+# "    </head>\n" \
+# "    <body>\n" \
+# "        <p><a href=\"vnc_lite.html\">noVNC Lite Client</a></p>\n" \
+# "        <p><a href=\"vnc.html\">noVNC Full Client</a></p>\n" \
+# "    </body>\n" \
+# "</html>" \
+# > "${NOVNC_HOME}"/index.html
+RUN cp "${NOVNC_HOME}"/vnc.html "${NOVNC_HOME}"/index.html
 
 EXPOSE "${NOVNC_PORT}"
 
@@ -226,96 +227,96 @@ WORKDIR "${HOME}"
 ### stage_chromium
 ##################
 
-FROM merge_stage_vnc as stage_chromium
-ARG ARG_APT_NO_RECOMMENDS
-ARG ARG_CHROMIUM_DISTRO
-ARG ARG_CHROMIUM_VERSION
+# FROM merge_stage_vnc as stage_chromium
+# ARG ARG_APT_NO_RECOMMENDS
+# ARG ARG_CHROMIUM_DISTRO
+# ARG ARG_CHROMIUM_VERSION
 
-ENV \
-    FEATURES_BUILD_SLIM_CHROMIUM="${ARG_APT_NO_RECOMMENDS:+1}" \
-    FEATURES_CHROMIUM=1
+# ENV \
+#     FEATURES_BUILD_SLIM_CHROMIUM="${ARG_APT_NO_RECOMMENDS:+1}" \
+#     FEATURES_CHROMIUM=1
 
-RUN \
-    --mount=type=cache,from=stage_cache,sharing=locked,source=/var/cache/apt,target=/var/cache/apt \
-    --mount=type=cache,from=stage_cache,sharing=locked,source=/var/lib/apt,target=/var/lib/apt \
-    --mount=type=cache,from=stage_cache,sharing=locked,source=/tmp/g3-cache/,target=/tmp/g3-cache/ \
-    CHROMIUM_VERSION="${ARG_CHROMIUM_VERSION}" \
-    CHROMIUM_DISTRO="${ARG_CHROMIUM_DISTRO}" \
-    &&  if [ ! -s "/tmp/g3-cache/chromium/chromium-browser_${CHROMIUM_VERSION}_${CHROMIUM_DISTRO}.deb" ] ; then \
-            wget --show-progress --progress=bar:force:noscroll \
-                -q "http://archive.ubuntu.com/ubuntu/pool/universe/c/chromium-browser/chromium-browser_${CHROMIUM_VERSION}_${CHROMIUM_DISTRO}.deb" \
-                -P "/tmp/g3-cache/chromium" ; \
-        fi \
-    &&  if [ ! -s "/tmp/g3-cache/chromium/chromium-codecs-ffmpeg_${CHROMIUM_VERSION}_${CHROMIUM_DISTRO}.deb" ] ; then \
-            wget --show-progress --progress=bar:force:noscroll \
-                -q "http://archive.ubuntu.com/ubuntu/pool/universe/c/chromium-browser/chromium-codecs-ffmpeg_${CHROMIUM_VERSION}_${CHROMIUM_DISTRO}.deb" \
-                -P "/tmp/g3-cache/chromium" ; \
-        fi \
-    &&  if [ ! -s "/tmp/g3-cache/chromium/chromium-browser-l10n_${CHROMIUM_VERSION}_all.deb" ] ; then \
-            wget --show-progress --progress=bar:force:noscroll \
-                -q "http://archive.ubuntu.com/ubuntu/pool/universe/c/chromium-browser/chromium-browser-l10n_${CHROMIUM_VERSION}_all.deb" \
-                -P "/tmp/g3-cache/chromium" ; \
-        fi \
-    &&  DEBIAN_FRONTEND=noninteractive apt-get install -y "${ARG_APT_NO_RECOMMENDS:+--no-install-recommends}" \
-        "/tmp/g3-cache/chromium/chromium-codecs-ffmpeg_${CHROMIUM_VERSION}_${CHROMIUM_DISTRO}.deb" \
-        "/tmp/g3-cache/chromium/chromium-browser_${CHROMIUM_VERSION}_${CHROMIUM_DISTRO}.deb" \
-        "/tmp/g3-cache/chromium/chromium-browser-l10n_${CHROMIUM_VERSION}_all.deb" \
-    &&  apt-mark hold chromium-browser
+# RUN \
+#     --mount=type=cache,from=stage_cache,sharing=locked,source=/var/cache/apt,target=/var/cache/apt \
+#     --mount=type=cache,from=stage_cache,sharing=locked,source=/var/lib/apt,target=/var/lib/apt \
+#     --mount=type=cache,from=stage_cache,sharing=locked,source=/tmp/g3-cache/,target=/tmp/g3-cache/ \
+#     CHROMIUM_VERSION="${ARG_CHROMIUM_VERSION}" \
+#     CHROMIUM_DISTRO="${ARG_CHROMIUM_DISTRO}" \
+#     &&  if [ ! -s "/tmp/g3-cache/chromium/chromium-browser_${CHROMIUM_VERSION}_${CHROMIUM_DISTRO}.deb" ] ; then \
+#             wget --show-progress --progress=bar:force:noscroll \
+#                 -q "http://archive.ubuntu.com/ubuntu/pool/universe/c/chromium-browser/chromium-browser_${CHROMIUM_VERSION}_${CHROMIUM_DISTRO}.deb" \
+#                 -P "/tmp/g3-cache/chromium" ; \
+#         fi \
+#     &&  if [ ! -s "/tmp/g3-cache/chromium/chromium-codecs-ffmpeg_${CHROMIUM_VERSION}_${CHROMIUM_DISTRO}.deb" ] ; then \
+#             wget --show-progress --progress=bar:force:noscroll \
+#                 -q "http://archive.ubuntu.com/ubuntu/pool/universe/c/chromium-browser/chromium-codecs-ffmpeg_${CHROMIUM_VERSION}_${CHROMIUM_DISTRO}.deb" \
+#                 -P "/tmp/g3-cache/chromium" ; \
+#         fi \
+#     &&  if [ ! -s "/tmp/g3-cache/chromium/chromium-browser-l10n_${CHROMIUM_VERSION}_all.deb" ] ; then \
+#             wget --show-progress --progress=bar:force:noscroll \
+#                 -q "http://archive.ubuntu.com/ubuntu/pool/universe/c/chromium-browser/chromium-browser-l10n_${CHROMIUM_VERSION}_all.deb" \
+#                 -P "/tmp/g3-cache/chromium" ; \
+#         fi \
+#     &&  DEBIAN_FRONTEND=noninteractive apt-get install -y "${ARG_APT_NO_RECOMMENDS:+--no-install-recommends}" \
+#         "/tmp/g3-cache/chromium/chromium-codecs-ffmpeg_${CHROMIUM_VERSION}_${CHROMIUM_DISTRO}.deb" \
+#         "/tmp/g3-cache/chromium/chromium-browser_${CHROMIUM_VERSION}_${CHROMIUM_DISTRO}.deb" \
+#         "/tmp/g3-cache/chromium/chromium-browser-l10n_${CHROMIUM_VERSION}_all.deb" \
+#     &&  apt-mark hold chromium-browser
 
-COPY "./xfce-chromium/src/home/Desktop" "${HOME}/Desktop"/
-COPY "./xfce-chromium/src/home/readme*.md" "${HOME}"/
+# COPY "./xfce-chromium/src/home/Desktop" "${HOME}/Desktop"/
+# COPY "./xfce-chromium/src/home/readme*.md" "${HOME}"/
 
-### Chromium browser requires some presets
-### Note that 'no-sandbox' flag is required, but intended for development only
-RUN \
-    echo \
-    "CHROMIUM_FLAGS='--no-sandbox --disable-gpu --user-data-dir --window-size=${VNC_RESOLUTION%x*},${VNC_RESOLUTION#*x} --window-position=0,0'" \
-    > "${HOME}/.chromium-browser.init"
+# ### Chromium browser requires some presets
+# ### Note that 'no-sandbox' flag is required, but intended for development only
+# RUN \
+#     echo \
+#     "CHROMIUM_FLAGS='--no-sandbox --disable-gpu --user-data-dir --window-size=${VNC_RESOLUTION%x*},${VNC_RESOLUTION#*x} --window-position=0,0'" \
+#     > "${HOME}/.chromium-browser.init"
 
 
 #################
 ### stage_firefox
 #################
 
-FROM merge_stage_vnc as stage_firefox
-ARG ARG_APT_NO_RECOMMENDS
+# FROM merge_stage_vnc as stage_firefox
+# ARG ARG_APT_NO_RECOMMENDS
 
-ENV \
-    FEATURES_BUILD_SLIM_FIREFOX="${ARG_APT_NO_RECOMMENDS:+1}" \
-    FEATURES_FIREFOX=1
+# ENV \
+#     FEATURES_BUILD_SLIM_FIREFOX="${ARG_APT_NO_RECOMMENDS:+1}" \
+#     FEATURES_FIREFOX=1
 
-RUN \
-    --mount=type=cache,from=stage_cache,sharing=locked,source=/var/cache/apt,target=/var/cache/apt \
-    --mount=type=cache,from=stage_cache,sharing=locked,source=/var/lib/apt,target=/var/lib/apt \
-    DEBIAN_FRONTEND=noninteractive apt-get install -y "${ARG_APT_NO_RECOMMENDS:+--no-install-recommends}" \
-        firefox
+# RUN \
+#     --mount=type=cache,from=stage_cache,sharing=locked,source=/var/cache/apt,target=/var/cache/apt \
+#     --mount=type=cache,from=stage_cache,sharing=locked,source=/var/lib/apt,target=/var/lib/apt \
+#     DEBIAN_FRONTEND=noninteractive apt-get install -y "${ARG_APT_NO_RECOMMENDS:+--no-install-recommends}" \
+#         firefox
 
-COPY "./xfce-firefox/src/home/Desktop" "${HOME}/Desktop"/
+# COPY "./xfce-firefox/src/home/Desktop" "${HOME}/Desktop"/
 
 
 ### ##################
 ### stage_firefox_plus
 ### ##################
 
-FROM stage_firefox as stage_firefox_plus
+# FROM stage_firefox as stage_firefox_plus
 
-ENV FEATURES_FIREFOX_PLUS=1
+# ENV FEATURES_FIREFOX_PLUS=1
 
-COPY "./xfce-firefox/src/firefox.plus/home/Desktop" "${HOME}/Desktop"/
-COPY "./xfce-firefox/src/firefox.plus/resources" "${HOME}/firefox.plus"/
-COPY "./xfce-firefox/src/firefox.plus/resources"/*.svg "/usr/share/icons/hicolor/scalable/apps"/
-COPY "./xfce-firefox/src/firefox.plus/home"/readme*.md "${HOME}"/
+# COPY "./xfce-firefox/src/firefox.plus/home/Desktop" "${HOME}/Desktop"/
+# COPY "./xfce-firefox/src/firefox.plus/resources" "${HOME}/firefox.plus"/
+# COPY "./xfce-firefox/src/firefox.plus/resources"/*.svg "/usr/share/icons/hicolor/scalable/apps"/
+# COPY "./xfce-firefox/src/firefox.plus/home"/readme*.md "${HOME}"/
 
-RUN \
-    chmod +x "${HOME}/firefox.plus"/*.sh \
-    && gtk-update-icon-cache -f "/usr/share/icons/hicolor"
+# RUN \
+#     chmod +x "${HOME}/firefox.plus"/*.sh \
+#     && gtk-update-icon-cache -f "/usr/share/icons/hicolor"
 
 
 #######################
 ### merge_stage_browser
 #######################
 
-FROM ${ARG_MERGE_STAGE_BROWSER_BASE} as merge_stage_browser
+# FROM ${ARG_MERGE_STAGE_BROWSER_BASE} as merge_stage_browser
 
 
 ###############
@@ -354,6 +355,9 @@ RUN \
 
 USER 1001
 
+COPY /etc/localtime /etc/localtime
+COPY /etc/timezone /etc/timezone
+
 ENTRYPOINT [ "/usr/bin/tini", "--", "/dockerstartup/startup.sh" ]
 # ENTRYPOINT [ "/usr/bin/tini", "--", "tail", "-f", "/dev/null" ]
 
@@ -362,26 +366,26 @@ ENTRYPOINT [ "/usr/bin/tini", "--", "/dockerstartup/startup.sh" ]
 ### METADATA STAGE
 ##################
 
-FROM stage_final as stage_metadata
-ARG ARG_CREATED
-ARG ARG_DOCKER_TAG
-ARG ARG_VCS_REF
-ARG ARG_VERSION_STICKER
+# FROM stage_final as stage_metadata
+# ARG ARG_CREATED
+# ARG ARG_DOCKER_TAG
+# ARG ARG_VCS_REF
+# ARG ARG_VERSION_STICKER
 
-LABEL \
-    org.opencontainers.image.authors="accetto" \
-    org.opencontainers.image.created="${ARG_CREATED}" \
-    org.opencontainers.image.description="Headless Ubuntu/Xfce/VNC/noVNC containers with Internet browsers" \
-    org.opencontainers.image.documentation="https://github.com/accetto/ubuntu-vnc-xfce-g3" \
-    org.opencontainers.image.source="https://github.com/accetto/ubuntu-vnc-xfce-g3" \
-    org.opencontainers.image.title="accetto/ubuntu-vnc-xfce-g3" \
-    org.opencontainers.image.url="https://github.com/accetto/ubuntu-vnc-xfce-g3" \
-    org.opencontainers.image.vendor="https://github.com/accetto" \
-    org.opencontainers.image.version="${ARG_DOCKER_TAG}"
+# LABEL \
+#     org.opencontainers.image.authors="accetto" \
+#     org.opencontainers.image.created="${ARG_CREATED}" \
+#     org.opencontainers.image.description="Headless Ubuntu/Xfce/VNC/noVNC containers with Internet browsers" \
+#     org.opencontainers.image.documentation="https://github.com/accetto/ubuntu-vnc-xfce-g3" \
+#     org.opencontainers.image.source="https://github.com/accetto/ubuntu-vnc-xfce-g3" \
+#     org.opencontainers.image.title="accetto/ubuntu-vnc-xfce-g3" \
+#     org.opencontainers.image.url="https://github.com/accetto/ubuntu-vnc-xfce-g3" \
+#     org.opencontainers.image.vendor="https://github.com/accetto" \
+#     org.opencontainers.image.version="${ARG_DOCKER_TAG}"
 
-LABEL \
-    org.label-schema.vcs-url="https://github.com/accetto/ubuntu-vnc-xfce-g3" \
-    org.label-schema.vcs-ref="${ARG_VCS_REF}"
+# LABEL \
+#     org.label-schema.vcs-url="https://github.com/accetto/ubuntu-vnc-xfce-g3" \
+#     org.label-schema.vcs-ref="${ARG_VCS_REF}"
 
-LABEL \
-    any.accetto.version-sticker="${ARG_VERSION_STICKER}"
+# LABEL \
+#     any.accetto.version-sticker="${ARG_VERSION_STICKER}"
