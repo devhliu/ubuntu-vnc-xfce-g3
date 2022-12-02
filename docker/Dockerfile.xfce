@@ -333,6 +333,10 @@ ENV \
     FEATURES_VERSION_STICKER=1 \
     STARTUPDIR="/dockerstartup"
 
+# timezone
+ENV TZ=Asia/Shanghai
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
 COPY "./src/xfce-startup" "${STARTUPDIR}"/
 
 COPY "./xfce/src/home/config" "${HOME}/.config"/
@@ -354,9 +358,6 @@ RUN \
     && "${STARTUPDIR}/set_user_permissions.sh" "${STARTUPDIR}" "${HOME}"
 
 USER 1001
-
-COPY /etc/localtime /etc/localtime
-COPY /etc/timezone /etc/timezone
 
 ENTRYPOINT [ "/usr/bin/tini", "--", "/dockerstartup/startup.sh" ]
 # ENTRYPOINT [ "/usr/bin/tini", "--", "tail", "-f", "/dev/null" ]
